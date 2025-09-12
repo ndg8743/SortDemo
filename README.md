@@ -13,7 +13,7 @@ An educational React application for visualizing sorting algorithms in real-time
 
 ## Live Demo
 
-Visit the live demo at: [https://yourusername.github.io/SortDemo](https://yourusername.github.io/SortDemo)
+Visit the live demo at: [https://ndg8743.github.io/SortDemo](https://ndg8743.github.io/SortDemo)
 
 ## Local Development
 
