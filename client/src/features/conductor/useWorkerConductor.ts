@@ -10,7 +10,7 @@ export function useWorkerConductor(values: number[], tick: number, algos: AlgoId
   const apiRef = useRef<Comlink.Remote<WorkerApi> | null>(null)
 
   useEffect(() => {
-    const worker = new Worker(new URL('@/workers/steps.worker.ts', import.meta.url), { type: 'module' })
+    const worker = new Worker(new URL('../../workers/steps.worker.ts', import.meta.url), { type: 'module' })
     const api = Comlink.wrap<WorkerApi>(worker)
     workerRef.current = worker
     apiRef.current = api

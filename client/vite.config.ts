@@ -10,4 +10,7 @@ export default defineConfig({
       '@': path.resolve(new URL('.', import.meta.url).pathname, 'src'),
     },
   },
+  worker: {
+    format: 'es',
+  },
 })
