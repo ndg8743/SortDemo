@@ -13,8 +13,8 @@ import { createBubbleSortSteps } from '@/features/algorithms/bubble'
 import { createInsertionSortSteps } from '@/features/algorithms/insertion'
 import { createSelectionSortSteps } from '@/features/algorithms/selection'
 import { createQuickSortSteps } from '@/features/algorithms/quick'
-import { useWorkerConductor } from '@/features/conductor/useWorkerConductor'
 import { toast } from 'sonner'
+import { Confetti } from '@/features/visualization/Confetti'
 
 function App() {
   const [seed, setSeed] = useState<string>('sortdemo')
@@ -22,12 +22,15 @@ function App() {
   const [speed, setSpeed] = useState<number>(2)
   const [playing] = useState<boolean>(true)
   const [userArray, setUserArray] = useState<number[]>([])
+  const [userSorted, setUserSorted] = useState(false)
+  const [uiDone, setUiDone] = useState({ bubble: false, insertion: false, selection: false, quick: false })
 
   const base = useSeededArray(seed, size)
   
   // Initialize user array when base changes
   useEffect(() => {
     setUserArray(base.slice())
+    setUserSorted(false)
   }, [base])
   const tick = useConductor(speed, playing)
 
@@ -40,15 +43,14 @@ function App() {
   const selectionFactory = (v: number[]) => createSelectionSortSteps(v)
   const quickFactory = (v: number[]) => createQuickSortSteps(v)
 
-  const frames = useWorkerConductor(userArray, tick, ['bubble','insertion','selection','quick'])
+  useEffect(() => {
+    setUiDone({ bubble: false, insertion: false, selection: false, quick: false })
+  }, [base])
 
-  const allDone = useMemo(() => {
-    const ids = ['bubble','insertion','selection','quick'] as const
-    return ids.every((id) => frames[id]?.done)
-  }, [frames])
+  const allUiDone = useMemo(() => Object.values(uiDone).every(Boolean), [uiDone])
 
   useEffect(() => {
-    if (!allDone) return
+    if (!allUiDone) return
     let remaining = 10
     let toastId: string | number | undefined
     const tickToast = () => {
@@ -69,7 +71,12 @@ function App() {
       }
     }, 1000)
     return () => clearInterval(interval)
-  }, [allDone])
+  }, [allUiDone])
+
+  useEffect(() => {
+    const isSorted = userArray.every((val, i, arr) => !i || val >= arr[i - 1])
+    setUserSorted(isSorted)
+  }, [userArray])
 
   return (
     <div className="min-h-screen w-full bg-background text-foreground">
@@ -77,12 +84,47 @@ function App() {
         
 
         <div className="row-span-1 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <AlgorithmCard title="Bubble Sort" initialValues={base} factory={bubbleFactory} width={Math.floor(width/2 - 24)} height={cellHeight} tick={tick} />
-          <AlgorithmCard title="Insertion Sort" initialValues={base} factory={insertionFactory} width={Math.floor(width/2 - 24)} height={cellHeight} tick={tick} />
-          <AlgorithmCard title="Selection Sort" initialValues={base} factory={selectionFactory} width={Math.floor(width/2 - 24)} height={cellHeight} tick={tick} />
-          <AlgorithmCard title="Quick Sort" initialValues={base} factory={quickFactory} width={Math.floor(width/2 - 24)} height={cellHeight} tick={tick} />
+          <AlgorithmCard 
+            title="Bubble Sort" 
+            initialValues={base} 
+            factory={bubbleFactory} 
+            width={Math.floor(width/2 - 24)} 
+            height={cellHeight} 
+            tick={tick} 
+            onDone={() => setUiDone((s) => ({ ...s, bubble: true }))}
+          />
+          <AlgorithmCard 
+            title="Insertion Sort" 
+            initialValues={base} 
+            factory={insertionFactory} 
+            width={Math.floor(width/2 - 24)} 
+            height={cellHeight} 
+            tick={tick} 
+            onDone={() => setUiDone((s) => ({ ...s, insertion: true }))}
+          />
+          <AlgorithmCard 
+            title="Selection Sort" 
+            initialValues={base} 
+            factory={selectionFactory} 
+            width={Math.floor(width/2 - 24)} 
+            height={cellHeight} 
+            tick={tick} 
+            onDone={() => setUiDone((s) => ({ ...s, selection: true }))}
+          />
+          <AlgorithmCard 
+            title="Quick Sort" 
+            initialValues={base} 
+            factory={quickFactory} 
+            width={Math.floor(width/2 - 24)} 
+            height={cellHeight} 
+            tick={tick} 
+            onDone={() => setUiDone((s) => ({ ...s, quick: true }))}
+          />
         </div>
-        <Card className="row-span-1">
+        <Card className="row-span-1 relative">
+          <div className="pointer-events-none absolute inset-0 z-10">
+            <Confetti active={userSorted} />
+          </div>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-title">User Sort - Drag bars to sort manually</CardTitle>
             <div className="flex items-center gap-3">

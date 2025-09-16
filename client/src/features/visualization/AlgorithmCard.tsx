@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useEffect, useRef, useState } from 'react'
 import { PixiBars } from './PixiBars'
+import { Confetti } from './Confetti.tsx'
 import { useSize } from './useSize'
 import type { SortGenerator, SortOp } from '@/features/algorithms/types'
 
@@ -16,17 +17,40 @@ function applyOps(values: number[], ops: SortOp[]) {
   }
 }
 
-export function AlgorithmCard({ title, initialValues, factory, width, height, tick }: { title: string; initialValues: number[]; factory: (v: number[]) => SortGenerator; width: number; height: number; tick: number; }) {
+export function AlgorithmCard({
+  title,
+  initialValues,
+  factory,
+  width,
+  height,
+  tick,
+  onDone,
+}: {
+  title: string
+  initialValues: number[]
+  factory: (v: number[]) => SortGenerator
+  width: number
+  height: number
+  tick: number
+  onDone?: () => void
+}) {
   const [local, setLocal] = useState<number[]>(initialValues)
   const [highlights, setHighlights] = useState<{ compare?: number[]; swap?: number[]; write?: number[] }>({})
   const genRef = useRef<SortGenerator | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const measured = useSize(containerRef)
+  const [completed, setCompleted] = useState(false)
+  const timeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
     genRef.current = factory(initialValues.slice())
     setLocal(initialValues.slice())
     setHighlights({})
+    setCompleted(false)
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
   }, [initialValues])
 
   useEffect(() => {
@@ -34,12 +58,14 @@ export function AlgorithmCard({ title, initialValues, factory, width, height, ti
     if (!gen) return
     const { value } = gen.next()
     if (!value) return
+
     let nextValues: number[]
     setLocal((prev) => {
       nextValues = prev.length ? prev.slice() : initialValues.slice()
       applyOps(nextValues!, value.ops)
       return nextValues!
     })
+
     const hl: any = {}
     for (const op of value.ops) {
       if (op.type === 'compare') hl.compare = [op.i, op.j]
@@ -47,7 +73,17 @@ export function AlgorithmCard({ title, initialValues, factory, width, height, ti
       if (op.type === 'write') hl.write = [op.index]
     }
     setHighlights(hl)
-  }, [tick])
+
+    if (value.done) {
+      console.log('done', "sorting function:", title)
+      setCompleted(true)
+      onDone?.()
+    }
+  }, [tick, onDone])
+
+  useEffect(() => () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+  }, [])
 
   return (
     <Card>
@@ -57,8 +93,11 @@ export function AlgorithmCard({ title, initialValues, factory, width, height, ti
         </div>
       </CardHeader>
       <CardContent className="overflow-hidden">
-        <div ref={containerRef} className="w-full h-[28vh] md:h-[30vh] lg:h-[32vh]">
+        <div ref={containerRef} className="relative w-full h-[28vh] md:h-[30vh] lg:h-[32vh]">
           <PixiBars values={local} width={measured.width || width} height={measured.height || height} highlights={highlights} />
+          <div className="pointer-events-none absolute inset-0 z-10">
+            <Confetti active={completed} />
+          </div>
         </div>
       </CardContent>
     </Card>
