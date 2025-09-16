@@ -74,6 +74,14 @@ function App() {
   return (
     <div className="min-h-screen w-full bg-background text-foreground">
       <div className="mx-auto grid max-w-[1800px] grid-rows-[1fr_2fr] gap-4 p-4 sm:p-6 lg:p-8" style={{height: '100vh'}}>
+        
+
+        <div className="row-span-1 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <AlgorithmCard title="Bubble Sort" initialValues={base} factory={bubbleFactory} width={Math.floor(width/2 - 24)} height={cellHeight} tick={tick} />
+          <AlgorithmCard title="Insertion Sort" initialValues={base} factory={insertionFactory} width={Math.floor(width/2 - 24)} height={cellHeight} tick={tick} />
+          <AlgorithmCard title="Selection Sort" initialValues={base} factory={selectionFactory} width={Math.floor(width/2 - 24)} height={cellHeight} tick={tick} />
+          <AlgorithmCard title="Quick Sort" initialValues={base} factory={quickFactory} width={Math.floor(width/2 - 24)} height={cellHeight} tick={tick} />
+        </div>
         <Card className="row-span-1">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-title">User Sort - Drag bars to sort manually</CardTitle>
@@ -104,13 +112,6 @@ function App() {
             </div>
           </CardContent>
         </Card>
-
-        <div className="row-span-1 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <AlgorithmCard title="Bubble Sort" initialValues={userArray} factory={bubbleFactory} width={Math.floor(width/2 - 24)} height={cellHeight} tick={tick} />
-          <AlgorithmCard title="Insertion Sort" initialValues={userArray} factory={insertionFactory} width={Math.floor(width/2 - 24)} height={cellHeight} tick={tick} />
-          <AlgorithmCard title="Selection Sort" initialValues={userArray} factory={selectionFactory} width={Math.floor(width/2 - 24)} height={cellHeight} tick={tick} />
-          <AlgorithmCard title="Quick Sort" initialValues={userArray} factory={quickFactory} width={Math.floor(width/2 - 24)} height={cellHeight} tick={tick} />
-        </div>
       </div>
     </div>
   )
