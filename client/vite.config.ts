@@ -10,8 +10,12 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, 'src'),
     },
+    dedupe: ['react', 'react-dom'],
   },
   worker: {
     format: 'es',
+  },
+  optimizeDeps: {
+    include: ['@radix-ui/react-dialog']
   },
 })

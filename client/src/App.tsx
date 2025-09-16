@@ -16,6 +16,42 @@ import { createQuickSortSteps } from '@/features/algorithms/quick'
 import { toast } from 'sonner'
 import { Confetti } from '@/features/visualization/Confetti'
 import { useNoSleep } from '@/lib/useNoSleep'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import { Settings } from 'lucide-react';
+
+type ControlsProps = {
+  seed: string;
+  setSeed: (seed: string) => void;
+  size: number;
+  setSize: (size: number) => void;
+  speed: number;
+  setSpeed: (speed: number) => void;
+};
+
+const Controls = ({ seed, setSeed, size, setSize, speed, setSpeed }: ControlsProps) => (
+  <div className="flex flex-col gap-4">
+    <div className="flex items-center justify-between">
+      <Label htmlFor="seed" className="text-lg">Seed</Label>
+      <Input id="seed" value={seed} onChange={(e) => setSeed(e.target.value)} className="w-48" />
+    </div>
+    <div className="flex items-center justify-between">
+      <Label className="text-lg">Size</Label>
+      <div className="w-48"><Slider value={[size]} min={16} max={256} step={1} onValueChange={(v) => setSize(v[0] ?? size)} /></div>
+    </div>
+    <div className="flex items-center justify-between">
+      <Label className="text-lg">Speed</Label>
+      <div className="w-48"><Slider value={[speed]} min={1} max={5} step={1} onValueChange={(v) => setSpeed(v[0] ?? speed)} /></div>
+    </div>
+    <Button variant="default" onClick={() => setSeed(String(Date.now()))}>Reset Array</Button>
+  </div>
+);
 
 function App() {
   const { enable } = useNoSleep()
@@ -79,11 +115,19 @@ function App() {
     setUserSorted(isSorted)
   }, [userArray])
 
-  return (
-    <div className="min-h-screen w-full bg-background text-foreground" onClick={enable}>
-      <div className="mx-auto grid max-w-[1800px] grid-rows-[1fr_2fr] gap-4 p-4 sm:p-6 lg:p-8" style={{height: '100vh'}}>
-        
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
 
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return (
+    <div className="h-screen w-full bg-background text-foreground" onClick={enable}>
+      <div className="mx-auto grid h-full max-w-[1800px] grid-rows-[auto_1fr] gap-4 p-4 sm:p-6 lg:p-8">
         <div className="row-span-1 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <AlgorithmCard 
             title="Bubble Sort" 
@@ -122,34 +166,41 @@ function App() {
             onDone={() => setUiDone((s) => ({ ...s, quick: true }))}
           />
         </div>
-        <Card className="row-span-1 relative">
+        <Card className="row-span-1 relative flex flex-col">
           <div className="pointer-events-none absolute inset-0 z-10">
             <Confetti active={userSorted} />
           </div>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-title">User Sort - Drag bars to sort manually</CardTitle>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="seed" className="text-sm">Seed</Label>
-                <Input id="seed" value={seed} onChange={(e) => setSeed(e.target.value)} className="w-40" />
-              </div>
-              <div className="flex items-center gap-2">
-                <Label className="text-sm">Size</Label>
-                <div className="w-40"><Slider value={[size]} min={16} max={256} step={1} onValueChange={(v) => setSize(v[0] ?? size)} /></div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Label className="text-sm">Speed</Label>
-                <div className="w-40"><Slider value={[speed]} min={1} max={5} step={1} onValueChange={(v) => setSpeed(v[0] ?? speed)} /></div>
-              </div>
-              <Button variant="default" onClick={() => setSeed(String(Date.now()))}>Reset Array</Button>
-            </div>
+            <CardTitle className="text-title">User Sort</CardTitle>
+            {isDesktop ? (
+              <div className="flex items-center gap-3"><Controls seed={seed} setSeed={setSeed} size={size} setSize={setSize} speed={speed} setSpeed={setSpeed} /></div>
+            ) : (
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <Settings className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent>
+                  <SheetHeader>
+                    <SheetTitle>Settings</SheetTitle>
+                    <SheetDescription>
+                      Adjust the sorting visualization parameters.
+                    </SheetDescription>
+                  </SheetHeader>
+                  <div className="py-4">
+                    <Controls seed={seed} setSeed={setSeed} size={size} setSize={setSize} speed={speed} setSpeed={setSpeed} />
+                  </div>
+                </SheetContent>
+              </Sheet>
+            )}
           </CardHeader>
-          <CardContent className="overflow-hidden">
-            <div className="w-full h-[28vh] md:h-[30vh] lg:h-[32vh]">
+          <CardContent className="overflow-hidden flex-grow">
+            <div className="w-full h-full">
               <InteractiveBars 
                 values={userArray} 
-                width={width} 
-                height={topHeight} 
+                width={isDesktop ? width : window.innerWidth - 32} 
+                height={isDesktop ? topHeight : window.innerHeight * 0.4} 
                 onValuesChange={setUserArray}
               />
             </div>
