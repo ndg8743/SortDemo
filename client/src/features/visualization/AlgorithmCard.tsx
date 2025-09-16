@@ -75,7 +75,6 @@ export function AlgorithmCard({
     setHighlights(hl)
 
     if (value.done) {
-      console.log('done', "sorting function:", title)
       setCompleted(true)
       onDone?.()
     }

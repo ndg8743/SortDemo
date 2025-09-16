@@ -15,8 +15,10 @@ import { createSelectionSortSteps } from '@/features/algorithms/selection'
 import { createQuickSortSteps } from '@/features/algorithms/quick'
 import { toast } from 'sonner'
 import { Confetti } from '@/features/visualization/Confetti'
+import { useNoSleep } from '@/lib/useNoSleep'
 
 function App() {
+  const { enable } = useNoSleep()
   const [seed, setSeed] = useState<string>('sortdemo')
   const [size, setSize] = useState<number>(64)
   const [speed, setSpeed] = useState<number>(2)
@@ -24,7 +26,6 @@ function App() {
   const [userArray, setUserArray] = useState<number[]>([])
   const [userSorted, setUserSorted] = useState(false)
   const [uiDone, setUiDone] = useState({ bubble: false, insertion: false, selection: false, quick: false })
-
   const base = useSeededArray(seed, size)
   
   // Initialize user array when base changes
@@ -79,7 +80,7 @@ function App() {
   }, [userArray])
 
   return (
-    <div className="min-h-screen w-full bg-background text-foreground">
+    <div className="min-h-screen w-full bg-background text-foreground" onClick={enable}>
       <div className="mx-auto grid max-w-[1800px] grid-rows-[1fr_2fr] gap-4 p-4 sm:p-6 lg:p-8" style={{height: '100vh'}}>
         
 

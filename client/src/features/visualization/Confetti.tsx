@@ -19,7 +19,6 @@ export function Confetti({ active }: { active: boolean }) {
   // Fire confetti when active becomes true
   useEffect(() => {
     if (active && confettiRef.current) {
-      console.log('Confetti!')
       confettiRef.current({
         particleCount: 160,
         spread: 80,
