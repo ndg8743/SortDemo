@@ -36,21 +36,21 @@ type ControlsProps = {
 };
 
 const Controls = ({ seed, setSeed, size, setSize, speed, setSpeed }: ControlsProps) => (
-  <div className="flex flex-col gap-4">
-    <div className="flex items-center justify-between">
+  <>
+    <div className="flex items-center gap-2">
       <Label htmlFor="seed" className="text-lg">Seed</Label>
-      <Input id="seed" value={seed} onChange={(e) => setSeed(e.target.value)} className="w-48" />
+      <Input id="seed" value={seed} onChange={(e) => setSeed(e.target.value)} className="w-36" />
     </div>
-    <div className="flex items-center justify-between">
+    <div className="flex items-center gap-2">
       <Label className="text-lg">Size</Label>
-      <div className="w-48"><Slider value={[size]} min={16} max={256} step={1} onValueChange={(v) => setSize(v[0] ?? size)} /></div>
+      <div className="w-36"><Slider value={[size]} min={16} max={256} step={1} onValueChange={(v) => setSize(v[0] ?? size)} /></div>
     </div>
-    <div className="flex items-center justify-between">
+    <div className="flex items-center gap-2">
       <Label className="text-lg">Speed</Label>
-      <div className="w-48"><Slider value={[speed]} min={1} max={5} step={1} onValueChange={(v) => setSpeed(v[0] ?? speed)} /></div>
+      <div className="w-36"><Slider value={[speed]} min={1} max={5} step={1} onValueChange={(v) => setSpeed(v[0] ?? speed)} /></div>
     </div>
     <Button variant="default" onClick={() => setSeed(String(Date.now()))}>Reset Array</Button>
-  </div>
+  </>
 );
 
 function App() {
@@ -133,7 +133,7 @@ function App() {
             title="Bubble Sort" 
             initialValues={base} 
             factory={bubbleFactory} 
-            width={Math.floor(width/2 - 24)} 
+            width={isDesktop ? Math.floor(width / 4 - 18) : Math.floor(width / 2 - 12)}
             height={cellHeight} 
             tick={tick} 
             onDone={() => setUiDone((s) => ({ ...s, bubble: true }))}
@@ -142,7 +142,7 @@ function App() {
             title="Insertion Sort" 
             initialValues={base} 
             factory={insertionFactory} 
-            width={Math.floor(width/2 - 24)} 
+            width={isDesktop ? Math.floor(width / 4 - 18) : Math.floor(width / 2 - 12)}
             height={cellHeight} 
             tick={tick} 
             onDone={() => setUiDone((s) => ({ ...s, insertion: true }))}
@@ -151,7 +151,7 @@ function App() {
             title="Selection Sort" 
             initialValues={base} 
             factory={selectionFactory} 
-            width={Math.floor(width/2 - 24)} 
+            width={isDesktop ? Math.floor(width / 4 - 18) : Math.floor(width / 2 - 12)}
             height={cellHeight} 
             tick={tick} 
             onDone={() => setUiDone((s) => ({ ...s, selection: true }))}
@@ -160,7 +160,7 @@ function App() {
             title="Quick Sort" 
             initialValues={base} 
             factory={quickFactory} 
-            width={Math.floor(width/2 - 24)} 
+            width={isDesktop ? Math.floor(width / 4 - 18) : Math.floor(width / 2 - 12)}
             height={cellHeight} 
             tick={tick} 
             onDone={() => setUiDone((s) => ({ ...s, quick: true }))}
@@ -173,7 +173,7 @@ function App() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-title">User Sort</CardTitle>
             {isDesktop ? (
-              <div className="flex items-center gap-3"><Controls seed={seed} setSeed={setSeed} size={size} setSize={setSize} speed={speed} setSpeed={setSpeed} /></div>
+              <div className="flex items-center gap-4"><Controls seed={seed} setSeed={setSeed} size={size} setSize={setSize} speed={speed} setSpeed={setSpeed} /></div>
             ) : (
               <Sheet>
                 <SheetTrigger asChild>
@@ -181,15 +181,27 @@ function App() {
                     <Settings className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent>
+                <SheetContent side="left" className="h-screen overflow-y-auto">
                   <SheetHeader>
                     <SheetTitle>Settings</SheetTitle>
                     <SheetDescription>
                       Adjust the sorting visualization parameters.
                     </SheetDescription>
                   </SheetHeader>
-                  <div className="py-4">
-                    <Controls seed={seed} setSeed={setSeed} size={size} setSize={setSize} speed={speed} setSpeed={setSpeed} />
+                  <div className="py-4 flex flex-col gap-4">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="seed" className="text-lg">Seed</Label>
+                      <Input id="seed" value={seed} onChange={(e) => setSeed(e.target.value)} className="w-48" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label className="text-lg">Size</Label>
+                      <div className="w-48"><Slider value={[size]} min={16} max={256} step={1} onValueChange={(v) => setSize(v[0] ?? size)} /></div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label className="text-lg">Speed</Label>
+                      <div className="w-48"><Slider value={[speed]} min={1} max={5} step={1} onValueChange={(v) => setSpeed(v[0] ?? speed)} /></div>
+                    </div>
+                    <Button variant="default" onClick={() => setSeed(String(Date.now()))}>Reset Array</Button>
                   </div>
                 </SheetContent>
               </Sheet>
