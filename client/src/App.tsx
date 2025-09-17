@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import './App.css'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { useSeededArray } from '@/features/conductor/useArraySeed'
 import { useConductor } from '@/features/conductor/useConductor'
 import { InteractiveBars } from '@/features/visualization/InteractiveBars'
@@ -62,6 +62,14 @@ function App() {
   const [userArray, setUserArray] = useState<number[]>([])
   const [userSorted, setUserSorted] = useState(false)
   const [uiDone, setUiDone] = useState({ bubble: false, insertion: false, selection: false, quick: false })
+  // Replace boolean with a numeric trigger
+  const [resetTrigger, setResetTrigger] = useState<number | null>(null);
+  const lastUserSortTimeRef = useRef<number | null>(null);
+  // Use browser-safe timer types
+  const restartTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Track our own toast id so we only dismiss our countdown toast
+  const toastIdRef = useRef<string | number | null>(null);
   const base = useSeededArray(seed, size)
   
   // Initialize user array when base changes
@@ -87,32 +95,112 @@ function App() {
   const allUiDone = useMemo(() => Object.values(uiDone).every(Boolean), [uiDone])
 
   useEffect(() => {
-    if (!allUiDone) return
-    let remaining = 10
-    let toastId: string | number | undefined
-    const tickToast = () => {
-      const msg = `${remaining} second${remaining === 1 ? '' : 's'} until next sort`
-      if (toastId !== undefined) {
-        toast.dismiss(toastId as any)
+    // Proceed if either all algorithms finished OR a forced trigger was requested
+    if (!allUiDone && !resetTrigger) return;
+
+    const forced = !!resetTrigger;
+    if (!forced) {
+      // Pause if user sorted very recently (unless forced)
+      if (lastUserSortTimeRef.current && Date.now() - lastUserSortTimeRef.current < 9900) {
+        console.log('[reset] Manual sort detected recently. Pausing automatic reset.');
+        toast("Manual sort detected!", { description: "Automatic reset paused." });
+        return;
       }
-      toastId = toast(msg, { description: 'Preparing new dataset...' })
+    } else {
+      console.log('[reset] Force reset triggered by inactivity.');
     }
-    tickToast()
-    const interval = setInterval(() => {
-      remaining -= 1
-      if (remaining <= 0) {
-        clearInterval(interval)
-        setSeed(String(Date.now()))
-      } else {
-        tickToast()
+
+    // Clear any existing countdown and toast
+    if (toastIntervalRef.current) {
+      console.log('[reset] Clearing previous countdown interval before starting a new one.');
+      clearInterval(toastIntervalRef.current);
+      toastIntervalRef.current = null;
+    }
+    if (toastIdRef.current != null) {
+      console.log('[reset] Dismissing previous countdown toast.');
+      toast.dismiss(toastIdRef.current as any);
+      toastIdRef.current = null;
+    }
+
+    let remaining = 10;
+    console.log(`[reset] Starting countdown: ${remaining}s until new dataset.`);
+    const tickToast = () => {
+      const msg = `${remaining} second${remaining === 1 ? '' : 's'} until next sort`;
+      if (toastIdRef.current != null) {
+        toast.dismiss(toastIdRef.current as any);
       }
-    }, 1000)
-    return () => clearInterval(interval)
-  }, [allUiDone])
+      toastIdRef.current = toast(msg, { description: 'Preparing new dataset...' }) as any;
+      console.log(`[reset] Countdown tick: ${remaining}s remaining.`);
+    };
+
+    tickToast();
+    toastIntervalRef.current = setInterval(() => {
+      remaining -= 1;
+      if (remaining <= 0) {
+        console.log('[reset] Countdown finished. Resetting seed.');
+        if (toastIntervalRef.current) {
+          clearInterval(toastIntervalRef.current);
+          toastIntervalRef.current = null;
+        }
+        if (toastIdRef.current != null) {
+          toast.dismiss(toastIdRef.current as any);
+          toastIdRef.current = null;
+        }
+        setResetTrigger(null); // allow future triggers
+        setSeed(String(Date.now()));
+      } else {
+        tickToast();
+      }
+    }, 1000);
+
+    return () => {
+      if (toastIntervalRef.current) {
+        console.log('[reset] Cleaning up countdown interval.');
+        clearInterval(toastIntervalRef.current);
+        toastIntervalRef.current = null;
+      }
+    };
+  }, [allUiDone, resetTrigger]);
+
+  const handleUserInteraction = () => {
+    console.log('[user] Interaction detected. Interrupting countdown and resetting inactivity timer.');
+    // Cancel any active countdown + toast
+    if (toastIntervalRef.current) {
+      clearInterval(toastIntervalRef.current);
+      toastIntervalRef.current = null;
+    }
+    if (toastIdRef.current != null) {
+      toast.dismiss(toastIdRef.current as any);
+      toastIdRef.current = null;
+    }
+    // Reset inactivity timer
+    if (restartTimeoutRef.current) {
+      clearTimeout(restartTimeoutRef.current);
+      restartTimeoutRef.current = null;
+    }
+    restartTimeoutRef.current = setTimeout(() => {
+      console.log('[user] 10s inactivity elapsed. Triggering forced reset countdown.');
+      // Use a unique value so effect re-runs every time (even back-to-back)
+      setResetTrigger(Date.now());
+    }, 10000);
+  };
 
   useEffect(() => {
-    const isSorted = userArray.every((val, i, arr) => !i || val >= arr[i - 1])
-    setUserSorted(isSorted)
+    if (userArray.length === 0) return;
+    const isSorted = userArray.every((val, i, arr) => !i || val >= arr[i - 1]);
+    setUserSorted(isSorted);
+    if (isSorted) {
+      console.log('[user] User completed a manual sort. Recording time and pausing auto-reset.', userArray);
+      lastUserSortTimeRef.current = Date.now();
+      // Cancel pending inactivity timer so user isn’t interrupted immediately
+      if (restartTimeoutRef.current) {
+        clearTimeout(restartTimeoutRef.current);
+        restartTimeoutRef.current = null;
+      }
+      toast.success("Great job! You've sorted the array.");
+      // force a reset countdown
+      setResetTrigger(Date.now());
+    }
   }, [userArray])
 
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
@@ -214,6 +302,7 @@ function App() {
                 width={isDesktop ? width : window.innerWidth - 32} 
                 height={isDesktop ? topHeight : window.innerHeight * 0.4} 
                 onValuesChange={setUserArray}
+                onInteraction={handleUserInteraction}
               />
             </div>
           </CardContent>

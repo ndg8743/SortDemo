@@ -6,9 +6,10 @@ export interface InteractiveBarsProps {
   width: number;
   height: number;
   onValuesChange: (newValues: number[]) => void;
+  onInteraction: () => void;
 }
 
-export function InteractiveBars({ values, width, height, onValuesChange }: InteractiveBarsProps) {
+export function InteractiveBars({ values, width, height, onValuesChange, onInteraction }: InteractiveBarsProps) {
   const [draggedItems, setDraggedItems] = useState<Map<number, { index: number; offset: number }>>(new Map());
   const max = useMemo(() => Math.max(1, ...values), [values]);
   const barWidth = Math.max(1, Math.floor(width / Math.max(1, values.length)));
@@ -31,7 +32,8 @@ export function InteractiveBars({ values, width, height, onValuesChange }: Inter
         return newMap;
       });
     }
-  }, [barWidth, values.length]);
+    onInteraction();
+  }, [barWidth, values.length, onInteraction]);
 
   const handlePointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     if (!draggedItems.has(event.pointerId)) return;
@@ -51,6 +53,7 @@ export function InteractiveBars({ values, width, height, onValuesChange }: Inter
       newValues.splice(newIndex, 0, draggedValue);
       
       onValuesChange(newValues);
+      onInteraction();
 
       setDraggedItems(prev => {
         const newMap = new Map(prev);
@@ -58,7 +61,7 @@ export function InteractiveBars({ values, width, height, onValuesChange }: Inter
         return newMap;
       });
     }
-  }, [draggedItems, barWidth, values, onValuesChange]);
+  }, [draggedItems, barWidth, values, onValuesChange, onInteraction]);
 
   const handlePointerUp = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     if (draggedItems.has(event.pointerId)) {
